@@ -13,7 +13,7 @@
         "https://pricempire.com/cs2-items/*",
         "https://www.pricempire.com/cs2-items/*"
       ],
-      "js": ["reorder-sections.js"],
+      "js": ["reorder-sections.js", "price-history.js"],
       "run_at": "document_idle"
     }
   ],

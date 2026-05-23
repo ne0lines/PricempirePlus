@@ -61,7 +61,7 @@ jobs:
         run: |
           set -euo pipefail
           package="PricempirePlus-${{ steps.version.outputs.version }}.zip"
-          zip -r "$package" manifest.json background.js popup.html popup.js reorder-sections.js icons
+          zip -r "$package" manifest.json background.js popup.html popup.js reorder-sections.js price-history.js icons
           echo "package=$package" >> "$GITHUB_OUTPUT"
 
       - name: Store package artifact
