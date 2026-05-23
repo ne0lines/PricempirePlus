@@ -26,25 +26,6 @@
   <sub><strong>All-time range at a glance.</strong> See where today's price sits between ATL and ATH without leaving the item page.</sub>
 </p>
 
----
-
-<table>
-  <tr>
-    <td width="33%" valign="top">
-      <h3>Price Range Insight</h3>
-      <p>Displays <strong>ATL</strong>, a live position slider, and <strong>ATH</strong> beside the current price using the item's historic market data.</p>
-    </td>
-    <td width="33%" valign="top">
-      <h3>Offers In Reach</h3>
-      <p>Moves <strong>Available offers</strong> directly above <strong>Similar Items</strong>, keeping market decisions closer to the item analysis.</p>
-    </td>
-    <td width="33%" valign="top">
-      <h3>Search From Anywhere</h3>
-      <p>Select an item name on any page and open it in Pricempire through a purpose-built right-click action.</p>
-    </td>
-  </tr>
-</table>
-
 ## Instant Item Search
 
 <p align="center">
