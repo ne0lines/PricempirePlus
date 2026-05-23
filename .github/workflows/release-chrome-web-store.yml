@@ -147,7 +147,7 @@ jobs:
           upload_state="$(jq -r '.uploadState // empty' <<< "$upload_response")"
 
           for _ in {1..12}; do
-            if [[ "$upload_state" == "SUCCESS" ]]; then
+            if [[ "$upload_state" == "SUCCEEDED" ]]; then
               break
             fi
             if [[ "$upload_state" != "UPLOAD_IN_PROGRESS" ]]; then
@@ -164,7 +164,7 @@ jobs:
             upload_state="$(jq -r '.uploadState // empty' <<< "$upload_response")"
           done
 
-          if [[ "$upload_state" != "SUCCESS" ]]; then
+          if [[ "$upload_state" != "SUCCEEDED" ]]; then
             echo "::error::Chrome Web Store upload timed out while processing."
             exit 1
           fi
