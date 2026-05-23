@@ -1,0 +1,175 @@
+name: Release Chrome Web Store Extension
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'dev'
+    runs-on: ubuntu-latest
+    outputs:
+      package: ${{ steps.package.outputs.package }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Check out merged code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - name: Build release version
+        id: version
+        env:
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          set -euo pipefail
+          base_version="$(jq -r '.version' manifest.json)"
+          if ! [[ "$base_version" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
+            echo "::error::manifest.json version must contain one to three numeric parts for automated releases."
+            exit 1
+          fi
+          if (( RUN_NUMBER > 65535 )); then
+            echo "::error::GitHub run number no longer fits a Chrome extension version component."
+            exit 1
+          fi
+
+          IFS='.' read -r major minor patch <<< "$base_version"
+          minor="${minor:-0}"
+          patch="${patch:-0}"
+          for component in "$major" "$minor" "$patch"; do
+            if (( component > 65535 )); then
+              echo "::error::A manifest version component exceeds Chrome's 65535 maximum."
+              exit 1
+            fi
+          done
+
+          version="${major}.${minor}.${patch}.${RUN_NUMBER}"
+          jq --arg version "$version" \
+            '.version = $version | .version_name = $version' \
+            manifest.json > manifest.release.json
+          mv manifest.release.json manifest.json
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: Package extension
+        id: package
+        run: |
+          set -euo pipefail
+          package="PricempirePlus-${{ steps.version.outputs.version }}.zip"
+          zip -r "$package" manifest.json background.js popup.html popup.js reorder-sections.js icons
+          echo "package=$package" >> "$GITHUB_OUTPUT"
+
+      - name: Store package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chrome-extension-package
+          path: ${{ steps.package.outputs.package }}
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          PACKAGE: ${{ steps.package.outputs.package }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$PACKAGE" --clobber
+          else
+            gh release create "$TAG" "$PACKAGE#PricempirePlus $VERSION" \
+              --target "${{ github.event.pull_request.merge_commit_sha }}" \
+              --title "PricempirePlus $VERSION" \
+              --notes "Automated release from merged dev pull request #${{ github.event.pull_request.number }}."
+          fi
+
+  publish:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download extension package
+        uses: actions/download-artifact@v4
+        with:
+          name: chrome-extension-package
+
+      - name: Validate Chrome Web Store configuration
+        env:
+          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+          CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+          CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+        run: |
+          set -euo pipefail
+          for key in CWS_CLIENT_ID CWS_CLIENT_SECRET CWS_REFRESH_TOKEN CWS_PUBLISHER_ID CWS_EXTENSION_ID; do
+            if [[ -z "${!key:-}" ]]; then
+              echo "::error::Missing required GitHub secret: $key"
+              exit 1
+            fi
+          done
+
+      - name: Upload and publish to Chrome Web Store
+        env:
+          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+          CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+          CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+          PACKAGE: ${{ needs.release.outputs.package }}
+        run: |
+          set -euo pipefail
+          token_response="$(
+            curl --fail-with-body --silent --show-error \
+              --request POST "https://oauth2.googleapis.com/token" \
+              --data-urlencode "client_id=$CWS_CLIENT_ID" \
+              --data-urlencode "client_secret=$CWS_CLIENT_SECRET" \
+              --data-urlencode "refresh_token=$CWS_REFRESH_TOKEN" \
+              --data-urlencode "grant_type=refresh_token"
+          )"
+          access_token="$(jq -er '.access_token' <<< "$token_response")"
+
+          upload_url="https://chromewebstore.googleapis.com/upload/v2/publishers/${CWS_PUBLISHER_ID}/items/${CWS_EXTENSION_ID}:upload"
+          status_url="https://chromewebstore.googleapis.com/v2/publishers/${CWS_PUBLISHER_ID}/items/${CWS_EXTENSION_ID}:fetchStatus"
+          publish_url="https://chromewebstore.googleapis.com/v2/publishers/${CWS_PUBLISHER_ID}/items/${CWS_EXTENSION_ID}:publish"
+
+          upload_response="$(
+            curl --fail-with-body --silent --show-error \
+              --request POST \
+              --header "Authorization: Bearer $access_token" \
+              --header "Content-Type: application/zip" \
+              --data-binary "@$PACKAGE" \
+              "$upload_url"
+          )"
+          upload_state="$(jq -r '.uploadState // empty' <<< "$upload_response")"
+
+          for _ in {1..12}; do
+            if [[ "$upload_state" == "SUCCESS" ]]; then
+              break
+            fi
+            if [[ "$upload_state" != "UPLOAD_IN_PROGRESS" ]]; then
+              echo "$upload_response" | jq .
+              echo "::error::Chrome Web Store upload did not succeed."
+              exit 1
+            fi
+            sleep 5
+            upload_response="$(
+              curl --fail-with-body --silent --show-error \
+                --header "Authorization: Bearer $access_token" \
+                "$status_url"
+            )"
+            upload_state="$(jq -r '.uploadState // empty' <<< "$upload_response")"
+          done
+
+          if [[ "$upload_state" != "SUCCESS" ]]; then
+            echo "::error::Chrome Web Store upload timed out while processing."
+            exit 1
+          fi
+
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $access_token" \
+            "$publish_url" | jq .
