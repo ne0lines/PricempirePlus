@@ -1,30 +1,25 @@
 # PricempirePlus
 
-Chrome extension enhancements for Pricempire item pages.
+PricempirePlus is a Chrome extension for faster Pricempire workflows.
 
-## Development
+## What It Does
 
-Feature work is merged from `dev` into `main` through a pull request. A merged
-`dev` pull request triggers the release workflow.
+1. Adds a right-click action for selected text:
+   `Search Pricempire for "<selected text>"`.
+2. On Pricempire CS2 item pages, it can move the `Market offers` block so it
+   appears above `Similar Items`.
+3. Provides a popup toggle:
+   `Move Market Offers to Bottom` (on/off).
 
-## Releases
+## Where It Runs
 
-`.github/workflows/release-chrome-web-store.yml` packages the extension, creates
-a GitHub release, uploads the ZIP to Chrome Web Store, and submits it for
-publishing.
+- Context-menu search works in the browser where text can be selected.
+- Layout adjustment runs on:
+  - `https://pricempire.com/cs2-items/*`
+  - `https://www.pricempire.com/cs2-items/*`
 
-The source manifest version is treated as a release series. For example,
-`"version": "1.0"` is packaged as `1.0.0.<github-run-number>` so each merged
-release has a newer Chrome Web Store version. If an existing store item already
-uses a later version series, increase `manifest.json` before the first release.
+## How To Use
 
-Configure these repository secrets before merging `dev` into `main`:
-
-- `CWS_CLIENT_ID`
-- `CWS_CLIENT_SECRET`
-- `CWS_REFRESH_TOKEN`
-- `CWS_PUBLISHER_ID`
-- `CWS_EXTENSION_ID`
-
-The Chrome Web Store item must exist and its store listing and privacy
-information must be completed before API publishing can succeed.
+1. Click the extension icon to open the popup.
+2. Toggle `Move Market Offers to Bottom`.
+3. Reload the Pricempire item page to apply the setting.
