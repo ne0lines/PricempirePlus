@@ -3,10 +3,20 @@
   "name": "Pricempire CS2 Skin Search",
   "version": "1.0",
   "description": "Right-click selected text to search Pricempire to see their current price.",
-  "permissions": ["contextMenus"],
+  "permissions": ["contextMenus", "storage"],
   "background": {
     "service_worker": "background.js"
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://pricempire.com/cs2-items/*",
+        "https://www.pricempire.com/cs2-items/*"
+      ],
+      "js": ["reorder-sections.js"],
+      "run_at": "document_idle"
+    }
+  ],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -18,6 +28,7 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "Pricempire Price Search"
+    "default_title": "Pricempire Price Search",
+    "default_popup": "popup.html"
   }
 }
