@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Pricempire CS2 Skin Search",
+  "version": "1.0",
+  "description": "Right-click selected text to search Pricempire to see their current price.",
+  "permissions": ["contextMenus"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Pricempire Price Search"
+  }
+}
