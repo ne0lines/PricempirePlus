@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Pricempire CS2 Skin Search",
+  "name": "PricempirePlus",
   "version": "1.0",
   "description": "Right-click selected text to search Pricempire to see their current price.",
   "permissions": ["contextMenus", "storage"],
@@ -28,7 +28,7 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "Pricempire Price Search",
+    "default_title": "PricempirePlus",
     "default_popup": "popup.html"
   }
 }
