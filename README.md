@@ -28,8 +28,6 @@
 
 ---
 
-## The Upgrade Layer
-
 <table>
   <tr>
     <td width="33%" valign="top">
@@ -46,17 +44,6 @@
     </td>
   </tr>
 </table>
-
-## One Page, More Signal
-
-```mermaid
-flowchart LR
-  A["Open a Pricempire CS2 item page"] --> B["Current item price"]
-  B --> C["ATL  -  position slider  -  ATH"]
-  A --> D["Available offers repositioned near Similar Items"]
-  E["Select item text anywhere"] --> F["Right-click: Search Pricempire"]
-  F --> A
-```
 
 ## Instant Item Search
 
