@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  <sub><strong>All-time range at a glance.</strong> See where today's price sits between ATL and ATH without leaving the item page.</sub>
+  <sub><strong>All-time range at a glance.</strong> See where today's price sits between ATL and ATH, based on Pricempire price data since tracking began for the item, without leaving the item page.</sub>
 </p>
 
 ## Instant Item Search
